@@ -6,3 +6,9 @@ idk what to put here
 # how do i get a token ? 
 use this bruh
 https://twitchapps.com/tmi/
+
+# todo:
+- progress bar
+- long test 
+- build
+- data counting in graphing.py
