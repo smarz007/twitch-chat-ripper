@@ -7,9 +7,8 @@ from datetime import datetime
 # basic data
 server = 'irc.chat.twitch.tv'
 port = 6667
-nickname = 'smarz'
-token = 'put token here'
-channel = '#atrioc'
+nickname = 'my_wicked_bot'
+done_scraping = False
 df = pd.DataFrame
 done = False
 data = []
@@ -25,20 +24,12 @@ logging.basicConfig(level=logging.DEBUG,
                     handlers=[logging.FileHandler('chat.txt', encoding='utf-8')])
 
 
-# initialize the socket and connect to the IRC
-sock = socket.socket()
-sock.connect((server, port))
 
-# connect to the server by sending the user and password
-sock.send(f"PASS {token}\n".encode('utf-8'))
-sock.send(f"NICK {nickname}\n".encode('utf-8'))
-
-# connect to the server
-sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
 
 def find_username(resp):
     """ this separates the username from the garbage were given """
+    global username
     x = 0
     for i in resp:
         x += 1
@@ -82,22 +73,52 @@ def return_data(file):
     return pd.DataFrame().from_records(data)
 
 
+
+
 # main event loop to get the data
+while not done:
 
-for i in range(50):
-    # receive a response from the server and sleep to avoid rate-limit
-    # we can make this faster if I do math lul
-    resp = sock.recv(2048).decode('utf-8')
-    time.sleep(2)
+    token = input("enter your token(check readme if you dont have one): ")
+    channel = "#" + input("enter channel to scrape: ")
 
-    # find the username then the password from our response
-    username = find_username(resp)
-    message = find_message(resp)
+    print(f"your token: {token}")
+    print(f"the channel you selected: {channel}")
+    ready = input("does this look right? (Y or N): ")
 
-    # create the dataframe from our data and show shape just in case
-    df = return_data("chat.log")
-    print(df.shape)
+    if ready == "Y":
+
+        # initialize the socket and connect to the IRC
+        sock = socket.socket()
+        sock.connect((server, port))
+
+        # connect to the server by sending the user and password
+        sock.send(f"PASS {token}\n".encode('utf-8'))
+        sock.send(f"NICK {nickname}\n".encode('utf-8'))
+
+        # connect to the server
+        sock.send(f"JOIN {channel}\n".encode('utf-8'))
+
+        for i in range(50):
+            # receive a response from the server and sleep to avoid rate-limit
+            # we can make this faster if I do math lul
+            resp = sock.recv(2048).decode('utf-8')
+            time.sleep(0.2)
+
+            # find the username then the password from our response
+            username = find_username(resp)
+            message = find_message(resp)
+
+            # create the dataframe from our data and show shape just in case
+            df = return_data("chat.log")
+            print(df.shape)
+            done_scraping = True
+
+    if done_scraping:
+
+        csv_name = input("enter the name of the csv:")
+
+        df.to_csv(csv_name+".csv", encoding='utf-8')
+        done = True
 
 
-# at the end, save the data to a csv
-df.to_csv('raw messages.csv', encoding='utf-8')
+
