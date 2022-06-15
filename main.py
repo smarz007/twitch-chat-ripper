@@ -45,7 +45,7 @@ def find_message(resp):
     end = no_front.find('\r\n')
 
     trimed_message = no_front[:end]
-    return trimed_message[1:]
+    return trimed_message[2:]
 
 
 def return_data(file):
@@ -82,7 +82,7 @@ while not done:
     print(f"you selected {points} data points")
     ready = input("does this look right? (Y or N): ")
 
-    if ready == "Y":
+    if ready == "Y" or ready == "YES":
 
         # initialize the socket and connect to the IRC
         sock = socket.socket()
@@ -95,11 +95,16 @@ while not done:
         # connect to the server
         sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-        for i in range(points ):
+        for i in range(points):
             # receive a response from the server and sleep to avoid rate-limit
             # we can make this faster if I do math lul
             resp = sock.recv(2048).decode('utf-8')
             time.sleep(0.1)
+
+            # check if the message received is the ping response. if it is reply
+            if resp[:4] == "PING":
+
+                sock.send("PONG".encode('utf-8'))
 
             # find the username then the password from our response
             username = find_username(resp)
@@ -107,7 +112,7 @@ while not done:
 
             # create the dataframe from our data and show shape just in case
             df = return_data("chat.log")
-            print(df.shape)
+            print(f"{df.shape}, {df.shape[0]} data-points")
             done_scraping = True
     else:
         print("aborting...")
@@ -118,3 +123,5 @@ while not done:
 
         df.to_csv(csv_name + ".csv", encoding='utf-8')
         done = True
+
+print("done")
