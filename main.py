@@ -24,9 +24,6 @@ logging.basicConfig(level=logging.DEBUG,
                     handlers=[logging.FileHandler('chat.txt', encoding='utf-8')])
 
 
-
-
-
 def find_username(resp):
     """ this separates the username from the garbage were given """
     global username
@@ -34,7 +31,7 @@ def find_username(resp):
     for i in resp:
         x += 1
         if i == "!":
-            username = resp[:x-1]
+            username = resp[:x - 1]
             break
 
     return username[1:]
@@ -73,16 +70,16 @@ def return_data(file):
     return pd.DataFrame().from_records(data)
 
 
-
-
 # main event loop to get the data
 while not done:
 
     token = input("enter your token(check readme if you dont have one): ")
     channel = "#" + input("enter channel to scrape: ")
+    points = int(input("how many dat points do you want: "))
 
     print(f"your token: {token}")
     print(f"the channel you selected: {channel}")
+    print(f"you selected {points} data points")
     ready = input("does this look right? (Y or N): ")
 
     if ready == "Y":
@@ -98,11 +95,11 @@ while not done:
         # connect to the server
         sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-        for i in range(50):
+        for i in range(points ):
             # receive a response from the server and sleep to avoid rate-limit
             # we can make this faster if I do math lul
             resp = sock.recv(2048).decode('utf-8')
-            time.sleep(0.2)
+            time.sleep(0.1)
 
             # find the username then the password from our response
             username = find_username(resp)
@@ -112,13 +109,12 @@ while not done:
             df = return_data("chat.log")
             print(df.shape)
             done_scraping = True
+    else:
+        print("aborting...")
+        break
 
     if done_scraping:
-
         csv_name = input("enter the name of the csv:")
 
-        df.to_csv(csv_name+".csv", encoding='utf-8')
+        df.to_csv(csv_name + ".csv", encoding='utf-8')
         done = True
-
-
-
