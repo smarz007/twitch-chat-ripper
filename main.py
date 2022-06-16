@@ -3,6 +3,7 @@ import time
 import pandas as pd
 import logging
 from datetime import datetime
+from tqdm import tqdm
 
 # basic data
 server = 'irc.chat.twitch.tv'
@@ -71,15 +72,17 @@ def return_data(file):
 
 
 # main event loop to get the data
+
 while not done:
 
     token = input("enter your token(check readme if you dont have one): ")
     channel = "#" + input("enter channel to scrape: ")
     points = int(input("how many dat points do you want: "))
-
-    print(f"your token: {token}")
-    print(f"the channel you selected: {channel}")
-    print(f"you selected {points} data points")
+    print()
+    print()
+    print(f"1. your token: {token}")
+    print(f"2. the channel you selected: {channel}")
+    print(f"3. you selected {points} data points")
     ready = input("does this look right? (Y or N): ")
 
     if ready == "Y" or ready == "YES":
@@ -95,15 +98,15 @@ while not done:
         # connect to the server
         sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-        for i in range(points):
+        for i in tqdm(range(points)):
+
             # receive a response from the server and sleep to avoid rate-limit
             # we can make this faster if I do math lul
             resp = sock.recv(2048).decode('utf-8')
-            time.sleep(0.1)
+            time.sleep(0.01)
 
             # check if the message received is the ping response. if it is reply
             if resp[:4] == "PING":
-
                 sock.send("PONG".encode('utf-8'))
 
             # find the username then the password from our response
@@ -112,8 +115,10 @@ while not done:
 
             # create the dataframe from our data and show shape just in case
             df = return_data("chat.log")
-            print(f"{df.shape}, {df.shape[0]} data-points")
+
             done_scraping = True
+
+
     else:
         print("aborting...")
         break
