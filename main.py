@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from tqdm import tqdm
 import os
+
 clear = lambda: os.system("cls")
 
 # basic data
@@ -15,11 +16,8 @@ done_scraping = False
 df = pd.DataFrame
 done = False
 data = []
-token = ""
-channel = ""
-points = ""
-csv_name = ""
-ready = ""
+token, channel, points, csv_name, ready = "", "", "", "", ""
+
 # get current time
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
@@ -113,11 +111,11 @@ while not done:
             channel = input("channel:")
             clear()
         elif ready == "3":
-            points = input("# of points:")
+            points = int(input("# of points:"))
             clear()
         elif ready == "4":
-            clear()
             csv_name = input("csv name:")
+            clear()
 
     if ready == "ready" or ready == "READY":
 
@@ -133,11 +131,10 @@ while not done:
         sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
         for i in tqdm(range(points)):
-
+            time.sleep(0.01)
             # receive a response from the server and sleep to avoid rate-limit
             # we can make this faster if I do math lul
             resp = sock.recv(2048).decode('utf-8')
-            time.sleep(0.01)
 
             # check if the message received is the ping response. if it is reply
             if resp[:4] == "PING":
