@@ -4,6 +4,8 @@ import pandas as pd
 import logging
 from datetime import datetime
 from tqdm import tqdm
+import os
+clear = lambda: os.system("cls")
 
 # basic data
 server = 'irc.chat.twitch.tv'
@@ -13,7 +15,11 @@ done_scraping = False
 df = pd.DataFrame
 done = False
 data = []
-
+token = ""
+channel = ""
+points = ""
+csv_name = ""
+ready = ""
 # get current time
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
@@ -74,18 +80,46 @@ def return_data(file):
 # main event loop to get the data
 
 while not done:
+    #
+    while not ready == "ready":
 
-    token = input("enter your token(check readme if you dont have one): ")
-    channel = "#" + input("enter channel to scrape: ")
-    points = int(input("how many dat points do you want: "))
-    print()
-    print()
-    print(f"1. your token: {token}")
-    print(f"2. the channel you selected: {channel}")
-    print(f"3. you selected {points} data points")
-    ready = input("does this look right? (Y or N): ")
+        print(f"""
+        
+             ▄▄·  ▄ .▄ ▄▄▄· ▄▄▄▄▄    ▄▄▄  ▪   ▄▄▄· ▄▄▄·▄▄▄ .▄▄▄  
+            ▐█ ▌▪██▪▐█▐█ ▀█ •██      ▀▄ █·██ ▐█ ▄█▐█ ▄█▀▄.▀·▀▄ █·
+            ██ ▄▄██▀▐█▄█▀▀█  ▐█.▪    ▐▀▀▄ ▐█· ██▀· ██▀·▐▀▀▪▄▐▀▀▄ 
+            ▐███▌██▌▐▀▐█ ▪▐▌ ▐█▌·    ▐█•█▌▐█▌▐█▪·•▐█▪·•▐█▄▄▌▐█•█▌
+            ·▀▀▀ ▀▀▀ · ▀  ▀  ▀▀▀     .▀  ▀▀▀▀.▀   .▀    ▀▀▀ .▀  ▀
+                                                        by smarz
+                                                        
+                            1. token: {token}
+                            ----------------------
+                            2. channel: {channel}
+                            ----------------------
+                            3. data points: {points}
+                            ----------------------
+                            4. name of csv:{csv_name}
+                            ----------------------
+        
+        
+        
+        """)
+        ready = input("enter number to change or type ready to start: ")
 
-    if ready == "Y" or ready == "YES":
+        if ready == "1":
+            token = input("token:")
+            clear()
+        elif ready == "2":
+            channel = input("channel:")
+            clear()
+        elif ready == "3":
+            points = input("# of points:")
+            clear()
+        elif ready == "4":
+            clear()
+            csv_name = input("csv name:")
+
+    if ready == "ready" or ready == "READY":
 
         # initialize the socket and connect to the IRC
         sock = socket.socket()
@@ -120,12 +154,10 @@ while not done:
 
 
     else:
-        print("aborting...")
+        print("something went wrong, try again")
         break
 
     if done_scraping:
-        csv_name = input("enter the name of the csv:")
-
         df.to_csv(csv_name + ".csv", encoding='utf-8')
         done = True
 
