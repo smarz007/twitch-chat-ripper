@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.DEBUG,
                     handlers=[logging.FileHandler('chat.txt', encoding='utf-8')])
 
 
-def find_username(resp):
+def find_username(resp, user=""):
     """ this separates the username from the garbage were given """
     global username
     x = 0
@@ -39,7 +39,7 @@ def find_username(resp):
             username = resp[:x - 1]
             break
 
-    return username[1:]
+    return user[1:]
 
 
 def find_message(resp):
@@ -98,10 +98,19 @@ while not done:
                             ----------------------
                             4. name of csv:{csv_name}
                             ----------------------
-        
-        
+                            type "ready" to start
+                            ----------------------       
         
         """)
+        token = input("token :")
+        clear()
+        channel = input("channel: ")
+        clear()
+        points = int(input("points: "))
+        clear()
+        csv_name = input("csv name: ")
+        clear()
+
         ready = input("enter number to change or type ready to start: ")
 
         if ready == "1":
@@ -117,45 +126,40 @@ while not done:
             csv_name = input("csv name:")
             clear()
 
-    if ready == "ready" or ready == "READY":
+    channel = "#" + channel
+    # initialize the socket
+    sock = socket.socket()
+    sock.connect((server, port))
 
-        # initialize the socket and connect to the IRC
-        sock = socket.socket()
-        sock.connect((server, port))
+    # connect to the server by sending the user and password
+    sock.send(f"PASS {token}\n".encode('utf-8'))
+    sock.send(f"NICK {nickname}\n".encode('utf-8'))
+    sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-        # connect to the server by sending the user and password
-        sock.send(f"PASS {token}\n".encode('utf-8'))
-        sock.send(f"NICK {nickname}\n".encode('utf-8'))
+    for i in tqdm(range(points)):
+        time.sleep(0.1)
+        # receive a response
+        resp = sock.recv(2048).decode('utf-8')
 
-        # connect to the server
-        sock.send(f"JOIN {channel}\n".encode('utf-8'))
+        # check if the message received is the ping response. if it is reply
+        if resp[:4] == "PING":
+            sock.send("PONG".encode('utf-8'))
+            clear()
 
-        for i in tqdm(range(points)):
-            time.sleep(0.01)
-            # receive a response from the server and sleep to avoid rate-limit
-            # we can make this faster if I do math lul
-            resp = sock.recv(2048).decode('utf-8')
+        # find the username then the password from our response
+        username = find_username(resp)
+        message = find_message(resp)
 
-            # check if the message received is the ping response. if it is reply
-            if resp[:4] == "PING":
-                sock.send("PONG".encode('utf-8'))
+        # create the dataframe from our data and show shape just in case
+        df = return_data("chat.log")
 
-            # find the username then the password from our response
-            username = find_username(resp)
-            message = find_message(resp)
-
-            # create the dataframe from our data and show shape just in case
-            df = return_data("chat.log")
-
-            done_scraping = True
-
-
-    else:
-        print("something went wrong, try again")
-        break
+    done_scraping = True
 
     if done_scraping:
         df.to_csv(csv_name + ".csv", encoding='utf-8')
         done = True
+
+    else:
+        print("an error has occured")
 
 print("done")
