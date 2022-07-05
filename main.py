@@ -26,7 +26,7 @@ current_time = now.strftime("%H:%M:%S")
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s — %(message)s',
                     datefmt='%Y-%m-%d_%H:%M:%S',
-                    handlers=[logging.FileHandler('chat.txt', encoding='utf-8')])
+                    handlers=[logging.FileHandler('chat.log', encoding='utf-8')])
 
 
 def find_username(resp, user=""):
@@ -79,7 +79,13 @@ def return_data(file):
 
 while not done:
     #
+    token = input("token :")
+    channel = input("channel: ")
+    points = int(input("points: "))
+    csv_name = input("csv name: ")
+    clear()
     while not ready == "ready":
+
 
         print(f"""
         
@@ -96,20 +102,14 @@ while not done:
                             ----------------------
                             3. data points: {points}
                             ----------------------
-                            4. name of csv:{csv_name}
+                            4. name of csv:{csv_name}.csv
                             ----------------------
                             type "ready" to start
                             ----------------------       
         
         """)
-        token = input("token :")
-        clear()
-        channel = input("channel: ")
-        clear()
-        points = int(input("points: "))
-        clear()
-        csv_name = input("csv name: ")
-        clear()
+
+
 
         ready = input("enter number to change or type ready to start: ")
 
