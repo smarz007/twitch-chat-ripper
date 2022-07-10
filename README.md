@@ -9,6 +9,8 @@ https://twitchapps.com/tmi/
 
 # todo:
 - long test
+- stop scraping if stream ends
+
 
 # special thanks:
 tqdm for the nice looking progress bar

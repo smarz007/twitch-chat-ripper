@@ -13,14 +13,14 @@ server = 'irc.chat.twitch.tv'
 port = 6667
 nickname = 'my_wicked_bot'
 done_scraping = False
-df = pd.DataFrame
+df = pd.DataFrame()
 first_run = True
 done = False
 data = []
 conter = 0
 token, channel, points, csv_name, ready = "", "", "", "", ""
 username, message = "", ""
-
+sock = socket.socket()
 # get current time
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
@@ -34,6 +34,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 def find_username(resp):
     """ this separates the username from the garbage were given """
+    global username
     x = 0
     for i in resp:
         x += 1
@@ -89,14 +90,14 @@ while not done:
     while not ready == "ready":
 
         print(f"""
-        
+
              ▄▄·  ▄ .▄ ▄▄▄· ▄▄▄▄▄    ▄▄▄  ▪   ▄▄▄· ▄▄▄·▄▄▄ .▄▄▄  
             ▐█ ▌▪██▪▐█▐█ ▀█ •██      ▀▄ █·██ ▐█ ▄█▐█ ▄█▀▄.▀·▀▄ █·
             ██ ▄▄██▀▐█▄█▀▀█  ▐█.▪    ▐▀▀▄ ▐█· ██▀· ██▀·▐▀▀▪▄▐▀▀▄ 
             ▐███▌██▌▐▀▐█ ▪▐▌ ▐█▌·    ▐█•█▌▐█▌▐█▪·•▐█▪·•▐█▄▄▌▐█•█▌
             ·▀▀▀ ▀▀▀ · ▀  ▀  ▀▀▀     .▀  ▀▀▀▀.▀   .▀    ▀▀▀ .▀  ▀
                                                         by smarz
-                                                        
+
                             1. token: {token}
                             ----------------------
                             2. channel: {channel}
@@ -107,7 +108,7 @@ while not done:
                             ----------------------
                             type "ready" to start
                             ----------------------      
-        
+
         """)
 
         ready = input("enter number to change or type ready to start: ")
@@ -128,7 +129,7 @@ while not done:
 
     channel = "#" + channel
     # initialize the socket
-    sock = socket.socket()
+
     sock.connect((server, port))
 
     # connect to the server by sending the user and password
@@ -139,34 +140,38 @@ while not done:
     for i in tqdm(range(points + 2)):
         time.sleep(0.1)
 
-        resp = sock.recv(2048).decode('utf-8')
+        resp = sock.recv(2048).decode("utf-8", "ignore")
 
         # check if the message received is the ping response. if it is reply
         if resp[:4] == "PING":
-            sock.send("PONG".encode('utf-8'))
+            sock.send("PONG :tmi.twitch.tv\r\n".encode('utf-8'))
 
         username = find_username(resp)
         message = find_message(resp)
 
+        if username == "" or username is None:
+            print("a connection error has occurred. disconnecting and reconnecting...")
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            time.sleep(30)
+            sock.connect((server, port))
+            sock.send(f"PASS {token}\n".encode('utf-8'))
+            sock.send(f"NICK {nickname}\n".encode('utf-8'))
+            sock.send(f"JOIN {channel}\n".encode('utf-8'))
+            time.sleep(1)
+
         if conter > 2:
             df = return_data("chat.log")
 
+
     done_scraping = True
+
+
+
+    csv_name += ".csv"
     if done_scraping:
-        df.to_csv(csv_name + ".csv", encoding='utf-8')
+        df.to_csv(csv_name, encoding='utf-8')
         done = True
-
-    if username == "" or username is None \
-            and message == "" or message is None:
-        print("a connection error has occurred. disconnecting and reconnecting...")
-        sock.close()
-        time.sleep(5)
-        sock.connect((server, port))
-        sock.send(f"PASS {token}\n".encode('utf-8'))
-        sock.send(f"NICK {nickname}\n".encode('utf-8'))
-        sock.send(f"JOIN {channel}\n".encode('utf-8'))
-        time.sleep(1)
-
 sock.close()
 print("done")
 
