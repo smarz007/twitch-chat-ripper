@@ -14,9 +14,12 @@ port = 6667
 nickname = 'my_wicked_bot'
 done_scraping = False
 df = pd.DataFrame
+first_run = True
 done = False
 data = []
+conter = 0
 token, channel, points, csv_name, ready = "", "", "", "", ""
+username, message = "", ""
 
 # get current time
 now = datetime.now()
@@ -29,9 +32,8 @@ logging.basicConfig(level=logging.DEBUG,
                     handlers=[logging.FileHandler('chat.log', encoding='utf-8')])
 
 
-def find_username(resp, user=""):
+def find_username(resp):
     """ this separates the username from the garbage were given """
-    global username
     x = 0
     for i in resp:
         x += 1
@@ -39,7 +41,7 @@ def find_username(resp, user=""):
             username = resp[:x - 1]
             break
 
-    return user[1:]
+    return username[1:]
 
 
 def find_message(resp):
@@ -79,13 +81,12 @@ def return_data(file):
 
 while not done:
     #
-    token = input("token :")
+    token = input("token: ")
     channel = input("channel: ")
     points = int(input("points: "))
     csv_name = input("csv name: ")
     clear()
     while not ready == "ready":
-
 
         print(f"""
         
@@ -105,11 +106,9 @@ while not done:
                             4. name of csv:{csv_name}.csv
                             ----------------------
                             type "ready" to start
-                            ----------------------       
+                            ----------------------      
         
         """)
-
-
 
         ready = input("enter number to change or type ready to start: ")
 
@@ -124,6 +123,7 @@ while not done:
             clear()
         elif ready == "4":
             csv_name = input("csv name:")
+
             clear()
 
     channel = "#" + channel
@@ -136,30 +136,38 @@ while not done:
     sock.send(f"NICK {nickname}\n".encode('utf-8'))
     sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-    for i in tqdm(range(points)):
+    for i in tqdm(range(points + 2)):
         time.sleep(0.1)
-        # receive a response
+
         resp = sock.recv(2048).decode('utf-8')
 
         # check if the message received is the ping response. if it is reply
         if resp[:4] == "PING":
             sock.send("PONG".encode('utf-8'))
-            clear()
 
-        # find the username then the password from our response
         username = find_username(resp)
         message = find_message(resp)
 
-        # create the dataframe from our data and show shape just in case
-        df = return_data("chat.log")
+        if conter > 2:
+            df = return_data("chat.log")
 
     done_scraping = True
-
     if done_scraping:
         df.to_csv(csv_name + ".csv", encoding='utf-8')
         done = True
 
-    else:
-        print("an error has occured")
+    if username == "" or username is None \
+            and message == "" or message is None:
+        print("a connection error has occurred. disconnecting and reconnecting...")
+        sock.close()
+        time.sleep(5)
+        sock.connect((server, port))
+        sock.send(f"PASS {token}\n".encode('utf-8'))
+        sock.send(f"NICK {nickname}\n".encode('utf-8'))
+        sock.send(f"JOIN {channel}\n".encode('utf-8'))
+        time.sleep(1)
 
+sock.close()
 print("done")
+
+# add a random message to the front page # gonna kill myself trying to add this
