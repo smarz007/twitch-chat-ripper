@@ -8,7 +8,13 @@ use this bruh
 https://twitchapps.com/tmi/
 
 # todo:
-- progress bar
-- long test 
-- build
-- data counting in graphing.py
+- long test
+- stop scraping if stream ends
+
+
+# special thanks:
+tqdm for the nice looking progress bar
+https://github.com/tqdm/tqdm
+
+ Brendan Martin https://www.learndatasci.com/tutorials/how-stream-text-data-twitch-sockets-python/
+ used this tutorial and adapted it to my needs

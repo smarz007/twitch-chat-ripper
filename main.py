@@ -4,16 +4,23 @@ import pandas as pd
 import logging
 from datetime import datetime
 from tqdm import tqdm
+import os
+
+clear = lambda: os.system("cls")
 
 # basic data
 server = 'irc.chat.twitch.tv'
 port = 6667
 nickname = 'my_wicked_bot'
 done_scraping = False
-df = pd.DataFrame
+df = pd.DataFrame()
+first_run = True
 done = False
 data = []
-
+conter = 0
+token, channel, points, csv_name, ready = "", "", "", "", ""
+username, message = "", ""
+sock = socket.socket()
 # get current time
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
@@ -22,7 +29,7 @@ current_time = now.strftime("%H:%M:%S")
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s — %(message)s',
                     datefmt='%Y-%m-%d_%H:%M:%S',
-                    handlers=[logging.FileHandler('chat.txt', encoding='utf-8')])
+                    handlers=[logging.FileHandler('chat.log', encoding='utf-8')])
 
 
 def find_username(resp):
@@ -74,59 +81,98 @@ def return_data(file):
 # main event loop to get the data
 
 while not done:
+    #
+    token = input("token: ")
+    channel = input("channel: ")
+    points = int(input("points: "))
+    csv_name = input("csv name: ")
+    clear()
+    while not ready == "ready":
 
-    token = input("enter your token(check readme if you dont have one): ")
-    channel = "#" + input("enter channel to scrape: ")
-    points = int(input("how many dat points do you want: "))
-    print()
-    print()
-    print(f"1. your token: {token}")
-    print(f"2. the channel you selected: {channel}")
-    print(f"3. you selected {points} data points")
-    ready = input("does this look right? (Y or N): ")
+        print(f"""
 
-    if ready == "Y" or ready == "YES":
+             ▄▄·  ▄ .▄ ▄▄▄· ▄▄▄▄▄    ▄▄▄  ▪   ▄▄▄· ▄▄▄·▄▄▄ .▄▄▄  
+            ▐█ ▌▪██▪▐█▐█ ▀█ •██      ▀▄ █·██ ▐█ ▄█▐█ ▄█▀▄.▀·▀▄ █·
+            ██ ▄▄██▀▐█▄█▀▀█  ▐█.▪    ▐▀▀▄ ▐█· ██▀· ██▀·▐▀▀▪▄▐▀▀▄ 
+            ▐███▌██▌▐▀▐█ ▪▐▌ ▐█▌·    ▐█•█▌▐█▌▐█▪·•▐█▪·•▐█▄▄▌▐█•█▌
+            ·▀▀▀ ▀▀▀ · ▀  ▀  ▀▀▀     .▀  ▀▀▀▀.▀   .▀    ▀▀▀ .▀  ▀
+                                                        by smarz
 
-        # initialize the socket and connect to the IRC
-        sock = socket.socket()
-        sock.connect((server, port))
+                            1. token: {token}
+                            ----------------------
+                            2. channel: {channel}
+                            ----------------------
+                            3. data points: {points}
+                            ----------------------
+                            4. name of csv:{csv_name}.csv
+                            ----------------------
+                            type "ready" to start
+                            ----------------------      
 
-        # connect to the server by sending the user and password
-        sock.send(f"PASS {token}\n".encode('utf-8'))
-        sock.send(f"NICK {nickname}\n".encode('utf-8'))
+        """)
 
-        # connect to the server
-        sock.send(f"JOIN {channel}\n".encode('utf-8'))
+        ready = input("enter number to change or type ready to start: ")
 
-        for i in tqdm(range(points)):
+        if ready == "1":
+            token = input("token:")
+            clear()
+        elif ready == "2":
+            channel = input("channel:")
+            clear()
+        elif ready == "3":
+            points = int(input("# of points:"))
+            clear()
+        elif ready == "4":
+            csv_name = input("csv name:")
 
-            # receive a response from the server and sleep to avoid rate-limit
-            # we can make this faster if I do math lul
-            resp = sock.recv(2048).decode('utf-8')
-            time.sleep(0.01)
+            clear()
 
-            # check if the message received is the ping response. if it is reply
-            if resp[:4] == "PING":
-                sock.send("PONG".encode('utf-8'))
+    channel = "#" + channel
+    # initialize the socket
 
-            # find the username then the password from our response
-            username = find_username(resp)
-            message = find_message(resp)
+    sock.connect((server, port))
 
-            # create the dataframe from our data and show shape just in case
+    # connect to the server by sending the user and password
+    sock.send(f"PASS {token}\n".encode('utf-8'))
+    sock.send(f"NICK {nickname}\n".encode('utf-8'))
+    sock.send(f"JOIN {channel}\n".encode('utf-8'))
+
+    for i in tqdm(range(points + 2)):
+        time.sleep(0.1)
+
+        resp = sock.recv(2048).decode("utf-8", "ignore")
+
+        # check if the message received is the ping response. if it is reply
+        if resp[:4] == "PING":
+            sock.send("PONG :tmi.twitch.tv\r\n".encode('utf-8'))
+
+        username = find_username(resp)
+        message = find_message(resp)
+
+        if username == "" or username is None:
+            print("a connection error has occurred. disconnecting and reconnecting...")
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+            time.sleep(30)
+            sock.connect((server, port))
+            sock.send(f"PASS {token}\n".encode('utf-8'))
+            sock.send(f"NICK {nickname}\n".encode('utf-8'))
+            sock.send(f"JOIN {channel}\n".encode('utf-8'))
+            time.sleep(1)
+
+        if conter > 2:
             df = return_data("chat.log")
 
-            done_scraping = True
+
+    done_scraping = True
 
 
-    else:
-        print("aborting...")
-        break
 
+    csv_name += ".csv"
     if done_scraping:
-        csv_name = input("enter the name of the csv:")
-
-        df.to_csv(csv_name + ".csv", encoding='utf-8')
+        df.to_csv(csv_name, encoding='utf-8')
         done = True
-
+sock.close()
 print("done")
+
+# add a random message to the front page # gonna kill myself trying to add this
