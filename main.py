@@ -127,16 +127,6 @@ while not done:
         message = find_message(resp)
         current_time = now.strftime("%H:%M:%S")
 
-        # if the username is blank a connection error has occured the restart
-        # if username == "" or username is None:
-        #     print("a connection error has occurred. disconnecting and reconnecting...")
-        #     sock.shutdown(socket.SHUT_RDWR)
-        #     sock.close()
-        #     time.sleep(15)
-        #
-        #     connect()
-        #     time.sleep(1)
-
         # this gets rid of the hello message twitch sends at the start
         if conter > 2:
             users.append(username)
