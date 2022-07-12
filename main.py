@@ -14,7 +14,7 @@ nickname = 'chat_scrapper'
 
 done_scraping = False
 done = False
-conter = 0
+counter = 0
 token, channel, points, csv_name, ready = "", "", "", "", ""
 username, message = "", ""
 users = []
@@ -57,8 +57,8 @@ def find_message(resp):
     no_front = resp[location + len(channel):]
     end = no_front.find('\r\n')
 
-    trimed_message = no_front[:end]
-    return trimed_message[2:]
+    trimmed_message = no_front[:end]
+    return trimmed_message[2:]
 
 
 # main event loop to get the data
@@ -114,12 +114,12 @@ while not done:
 
     for i in tqdm(range(points + 2)):
         time.sleep(0.1)
-        conter += 1
+        counter += 1
 
         # response from twitch chat
         resp = sock.recv(2048).decode("utf-8", "ignore")
 
-        # check if the message received is the ping response. if it is reply
+        # check if the message received is the ping response.
         if resp[:4] == "PING":
             sock.send("PONG :tmi.twitch.tv\r\n".encode('utf-8'))
 
@@ -128,7 +128,7 @@ while not done:
         current_time = now.strftime("%H:%M:%S")
 
         # this gets rid of the hello message twitch sends at the start
-        if conter > 2:
+        if counter > 2:
             users.append(username)
             messages.append(message)
             times.append(current_time)
