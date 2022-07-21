@@ -132,7 +132,6 @@ while not done:
             users.append(username)
             messages.append(message)
             times.append(current_time)
-            print(username)
 
     done_scraping = True
 
